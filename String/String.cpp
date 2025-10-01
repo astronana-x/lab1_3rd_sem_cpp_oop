@@ -1,5 +1,10 @@
 #include "String.h"
+#include "Index/Index.h"
 
+const size_t String::start_length = 10;
+const size_t String::resize_factor = 2;
+const size_t String::max_length_limit = 1000;
+const char String::value_error = '\0';
 
 //определение статической константы:
 int String :: count = 0;
@@ -89,4 +94,87 @@ char* String::to_string() const {
     char* res = new char[length + 1]; 
     strcpy(res, arr);                 
     return res;                       
+}
+
+// перегрузка + со стркоой типа *char
+String String::operator+(const char* rhs) const {
+    size_t new_len = length + strlen(rhs);
+    char* new_arr = new char[new_len + 1];
+    strcpy(new_arr, arr);
+    strcat(new_arr, rhs);
+    String res(new_arr);
+    delete[] new_arr;
+    return res;
+}
+
+//сложение двух объектов класса
+String String::operator+(const String& rhs) const {
+    return *this + rhs.get_string();
+}
+
+//операция вычитания как удаление подстроки
+String String::operator-(const char* substr) const {
+    String res(*this);
+    int pos = res.find_substring(substr);
+    if (pos != -1) {
+        size_t sub_len = strlen(substr);
+
+        // сдвигаем оставшуюся часть строки, начинаем с позиции удаления и сдвигаем всё что после подстроки
+        for (size_t i = pos; i < res.length - sub_len; i++) {
+            res.arr[i] = res.arr[i + sub_len];
+        }
+        res.length -= sub_len;
+        res.arr[res.length] = '\0';
+    }
+    return res;
+}
+
+// присваивание
+String& String::operator=(const String& other) {
+    if (this == &other) return *this;
+    delete[] arr;
+    length = other.length;
+    max_length = other.max_length;
+    arr = new char[max_length];
+    strcpy(arr, other.arr);
+    return *this;
+}
+
+// индексирование через дружественный класс для записи
+Index String::operator[](size_t indx) {
+    return Index(this, indx);
+}
+
+//индексирование для чтения
+char String::operator[](size_t indx) const {
+    if (indx < 0 || static_cast<size_t>(indx) >= length) {
+        return value_error;
+    }
+    return arr[indx];
+}
+
+//метод для увеличения размера массива
+void String::_resize_array(size_t required_size) {
+    if (required_size <= max_length) return;
+
+    // вычисляем новый размер
+    size_t new_size = max_length;
+    while (new_size < required_size) {
+        new_size *= resize_factor;
+        if (new_size > max_length_limit) {
+            new_size = max_length_limit;
+            break;
+        }
+    }
+
+    char* new_arr = new char[new_size];
+
+    // копируем данные из старого массива
+    if (arr) {
+        strcpy(new_arr, arr);
+        delete[] arr;
+    }
+
+    arr = new_arr;
+    max_length = new_size;
 }

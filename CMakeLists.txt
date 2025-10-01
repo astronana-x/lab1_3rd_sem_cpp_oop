@@ -9,6 +9,8 @@ set(SRC
         main.cpp
         String/String.cpp
         Google_tests/tests.cpp
+        Index/Index.cpp
+
 )
 
 # Подключаем GoogleTest (лежит в Google_tests/lib)
